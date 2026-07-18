@@ -71,3 +71,40 @@ Model + engine + grading are unchanged by the swap — only the serializer is ne
 - Web UI (Next.js) where adjustments/weights are entered and narratives regenerate live.
 - Supabase persistence; VOW RESO API adapter (replaces manual CSV) when feed subscribed.
 - serialize_36.py when UAD 3.6 lands (Nov 2026) — model/engine unchanged.
+
+## Full-report build command (added 2026-07-17)
+- `build_report.py` — THE COMMAND. Run `python3 build_report.py` to generate the
+  MISMO import file + paste-ready narratives for an assignment.
+- `engine/serialize_full.py` — assembles the complete MISMO 2.6 file (subject block,
+  market section, comp grid, valuation) in the VALUATION_RESPONSE envelope TOTAL reads.
+- `engine/market_conditions.py` — 1004MC engine, built to Fannie/forum best practice:
+  subject's competing SEGMENT (not whole neighborhood), time-bucketed, thin buckets
+  DISCLOSED not invented. Requires a dated MLS pull (one-line export lacks sale dates).
+
+### Output (per run, in output/)
+- `Poipu_Aina.xml` — the MISMO file to import into TOTAL (well-formed, 6 comps placed)
+- `Poipu_Aina_narratives.txt` — per-comp narratives, guideline disclosure, weighting, MC note
+
+### To finish this report
+1. Verify subject GLA (assumed 4,532).
+2. Set adjustments + weights in assignment_poipu_aina.py (your judgment).
+3. Provide a dated neighborhood-segment MLS pull for the 1004MC.
+4. Re-run `python3 build_report.py`.
+5. Import Poipu_Aina.xml into TOTAL; add maps/photos/sketch/signature; deliver.
+
+### Known next gates
+- Real round-trip: import the generated XML into TOTAL, confirm clean ingestion, tune
+  fields to match TOTAL's exact expectations (this is the validation we haven't crossed).
+- The generated file omits the embedded PDF (delivery format), which authoring-import
+  may not require — confirm during the round-trip test.
+
+## Dated export + real 1004MC (added 2026-07-17)
+- Parser now reads the richer HIS export with `Sold Date`, `Agent Remarks`, `Public Remarks`.
+- `engine/enrich.py` — remarks keyword scanner (pool/ADU/solar/ocean view/etc., visible
+  aids for comp selection, NOT auto-adjustments) + MC-record builder (segment-filtered).
+- `build_report.py` computes the real 1004MC when a dated pull is at `data/neighborhood_dated.csv`.
+- Verified on real data: 45 dated solds in the competing segment produced live absorption,
+  median-price, and median-DOM buckets. Appraiser concludes the trend direction.
+
+### To refresh the 1004MC
+Drop a dated HIS export (with a Sold Date column) at `data/neighborhood_dated.csv`, re-run build.

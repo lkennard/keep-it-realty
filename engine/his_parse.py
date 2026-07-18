@@ -51,6 +51,19 @@ def _dom(s: Optional[str]) -> Optional[int]:
     return int(v) if v is not None else None
 
 
+def _date(s: Optional[str]):
+    """Parse a sold date. HIS dated export uses M/D/YYYY. Returns datetime.date or None."""
+    from datetime import datetime
+    if not s or not s.strip():
+        return None
+    for fmt in ("%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(s.strip(), fmt).date()
+        except ValueError:
+            continue
+    return None
+
+
 def tmk_parts(tmk: str) -> list[str]:
     return [p for p in (tmk or "").split("-") if p != ""]
 
@@ -75,6 +88,9 @@ class Comp:
     location: str
     lot_acres: Optional[float]
     gla: Optional[float]
+    sold_date: object = None          # datetime.date or None (dated export only)
+    agent_remarks: str = ""
+    public_remarks: str = ""
     raw: dict = field(default_factory=dict)
 
     @property
@@ -135,6 +151,10 @@ HIS_FIELD_MAP = {
     "location": "Location",
     "lot": "Lnd Area",
     "gla": "Living Area",
+    # optional columns present only in the richer dated export:
+    "sold_date": "Sold Date",
+    "agent_remarks": "Agent Remarks",
+    "public_remarks": "Public Remarks",
 }
 
 
@@ -159,6 +179,9 @@ def parse_his_csv(path: str) -> list[Comp]:
                 location=(row.get(HIS_FIELD_MAP["location"]) or "").strip(),
                 lot_acres=_acres(row.get(HIS_FIELD_MAP["lot"])),
                 gla=_num(row.get(HIS_FIELD_MAP["gla"])),
+                sold_date=_date(row.get(HIS_FIELD_MAP["sold_date"])),
+                agent_remarks=(row.get(HIS_FIELD_MAP["agent_remarks"]) or "").strip(),
+                public_remarks=(row.get(HIS_FIELD_MAP["public_remarks"]) or "").strip(),
                 raw=dict(row),
             ))
     return comps
